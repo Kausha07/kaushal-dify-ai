@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI-PromptCraft — LLM Workflow & Prompt Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #0d0f1a 0%, #151a30 50%, #201335 100%);
+      --card-bg: rgba(21, 26, 48, 0.75);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --primary-accent: #3b82f6;
+      --secondary-accent: #8b5cf6;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --success: #10b981;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 2rem 5%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--card-border);
+      backdrop-filter: blur(12px);
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-badge {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 20px;
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+    }
+
+    .logo-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 20px;
+      font-size: 0.85rem;
+      color: #60a5fa;
+      font-weight: 600;
+    }
+
+    main {
+      flex: 1;
+      max-width: 1100px;
+      width: 90%;
+      margin: 2.5rem auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+
+    .panel {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 1.75rem;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .panel-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .input-group {
+      margin-bottom: 1.25rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+
+    textarea, input[type="text"] {
+      width: 100%;
+      padding: 12px 16px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border 0.3s ease;
+    }
+
+    textarea:focus, input[type="text"]:focus {
+      border-color: var(--primary-accent);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent));
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+    }
+
+    .output-box {
+      background: rgba(10, 14, 26, 0.9);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      min-height: 220px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: #e2e8f0;
+      white-space: pre-wrap;
+      position: relative;
+    }
+
+    .token-cursor {
+      display: inline-block;
+      width: 8px;
+      height: 16px;
+      background: var(--primary-accent);
+      margin-left: 2px;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    .meta-bar {
+      display: flex;
+      gap: 15px;
+      margin-top: 1rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .meta-item {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--card-border);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo-container">
+      <div class="logo-badge">✦</div>
+      <div class="logo-title">AI-PromptCraft <span style="font-weight: 400; color: var(--text-muted);">| Prompt Studio</span></div>
+    </div>
+    <div class="status-badge">
+      ⚡ GPT-4o Streaming (SSE Enabled)
+    </div>
+  </header>
+
+  <main>
+    <!-- Left Panel: Prompt Template Chain Builder -->
+    <div class="panel">
+      <div class="panel-title">
+        <span>⚙️ Prompt Template Builder</span>
+        <span style="font-size: 0.75rem; color: #a78bfa; background: rgba(167, 139, 250, 0.15); padding: 4px 8px; border-radius: 6px;">v3.0</span>
+      </div>
+
+      <div class="input-group">
+        <label>Prompt Template (with {{variable}} interpolation)</label>
+        <textarea id="promptTemplate" rows="4">Generate a compelling {{tone}} product description for {{product_name}} highlighting {{key_feature}}.</textarea>
+      </div>
+
+      <div class="input-group">
+        <label>Variable: {{tone}}</label>
+        <input type="text" id="varTone" value="luxury & modern">
+      </div>
+
+      <div class="input-group">
+        <label>Variable: {{product_name}}</label>
+        <input type="text" id="varProduct" value="AIVI Smart Watch Series 5">
+      </div>
+
+      <div class="input-group">
+        <label>Variable: {{key_feature}}</label>
+        <input type="text" id="varFeature" value="AI fitness tracking and 7-day battery life">
+      </div>
+
+      <button class="btn" onclick="streamPromptOutput()">🚀 Test & Stream LLM Output</button>
+    </div>
+
+    <!-- Right Panel: Real-Time SSE Token Output -->
+    <div class="panel">
+      <div class="panel-title">
+        <span>✨ Real-Time SSE Token Stream</span>
+        <span id="tokenCounter" style="font-size: 0.8rem; font-family: 'JetBrains Mono'; color: var(--success);">0 tokens</span>
+      </div>
+
+      <div class="output-box" id="streamOutput">Click 'Test & Stream LLM Output' to see real-time token rendering...</div>
+
+      <div class="meta-bar">
+        <div class="meta-item">Model: <strong>GPT-4o</strong></div>
+        <div class="meta-item">Protocol: <strong>Server-Sent Events</strong></div>
+        <div class="meta-item">Latency Reduction: <strong>60%</strong></div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    Built by <strong>Kaushal Raithatha</strong> — Next.js 14, TypeScript, TailwindCSS, OpenAI SSE Streaming
+  </footer>
+
+  <script>
+    async function streamPromptOutput() {
+      const template = document.getElementById('promptTemplate').value;
+      const variables = {
+        tone: document.getElementById('varTone').value,
+        product_name: document.getElementById('varProduct').value,
+        key_feature: document.getElementById('varFeature').value
+      };
+
+      const output = document.getElementById('streamOutput');
+      const counter = document.getElementById('tokenCounter');
+      output.innerText = '';
+      counter.innerText = 'Streaming...';
+
+      let tokenCount = 0;
+
+      try {
+        const res = await fetch('/api/v1/prompts/stream', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ template, variables })
+        });
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
+
+          lines.forEach(line => {
+            if (line.startsWith('data: ')) {
+              const payload = line.replace('data: ', '').trim();
+              if (payload === '[DONE]') {
+                counter.innerText = `${tokenCount} tokens (Complete)`;
+                return;
+              }
+              try {
+                const parsed = JSON.parse(payload);
+                if (parsed.token) {
+                  output.innerText += parsed.token;
+                  tokenCount++;
+                  counter.innerText = `${tokenCount} tokens`;
+                }
+              } catch (e) {}
+            }
+          });
+        }
+      } catch (err) {
+        output.innerText = 'Error streaming prompt output.';
+      }
+    }
+  </script>
+</body>
+</html>
